@@ -1,6 +1,6 @@
 // TypeScript types for DB tables (V2 ADJUSTED)
 export type RiscLevel = "CRÍTICA" | "ALTA" | "MODERADA" | "BAIXA";
-export type UserProfile = "Gestor" | "Coordenador" | "Tecnico" | "Admin";
+export type UserProfile = "Gestor" | "Coordenador" | "Tecnico" | "Admin" | "Tecnico_CRAS" | "Tecnico_UBS";
 
 export interface Municipio {
     id: string; nome: string; estado: string; cnpj?: string; email?: string; ativo: boolean;
@@ -101,6 +101,8 @@ export type Database = {
             buscas_ativas: { Row: BuscaAtiva; Insert: Partial<BuscaAtiva>; Update: Partial<BuscaAtiva> };
             encaminhamentos: { Row: Encaminhamento; Insert: Partial<Encaminhamento>; Update: Partial<Encaminhamento> };
             usuarios: { Row: Usuario; Insert: Partial<Usuario>; Update: Partial<Usuario> };
+            municipios: { Row: Municipio; Insert: Partial<Municipio>; Update: Partial<Municipio> };
+            territorios: { Row: Territorio; Insert: Partial<Territorio>; Update: Partial<Territorio> };
         };
     };
 };

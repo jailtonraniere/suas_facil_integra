@@ -40,7 +40,7 @@ export default function Sidebar() {
                         <div className="text-white font-bold text-sm leading-tight flex items-center gap-1">
                             SUAS<span className="font-normal opacity-90">Fácil</span>
                         </div>
-                        <div className="text-blue-200 text-xs font-medium">Integra</div>
+                        <div className="text-blue-200 text-xs font-medium">Integra - Mauá</div>
                     </div>
                 </div>
             </div>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "SUAS Fácil Integra",
+    title: "SUAS Fácil Integra - Mauá",
     description: "Sistema de Monitoramento de Vulnerabilidade Social e Saúde — SUAS + SUS",
 };
 
