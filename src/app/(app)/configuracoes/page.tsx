@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Users, MapPin, Building, Plus, Pencil, X, Save, AlertCircle } from "lucide-react";
+import { Users, MapPin, Building, Plus, Pencil, X, Save, AlertCircle, Upload, FileUp, CheckCircle } from "lucide-react";
 import type { Usuario, Territorio, Municipio } from "@/lib/supabase/types";
 
 export default function ConfiguracoesPage() {
@@ -17,6 +17,14 @@ export default function ConfiguracoesPage() {
 
     const [formDataUser, setFormDataUser] = useState({ nome: "", email: "", perfil: "Tecnico_CRAS", ativo: true });
     const [formDataTerritory, setFormDataTerritory] = useState({ nome: "", tipo: "CRAS", ativo: true });
+
+    // Import state
+    const [importFile, setImportFile] = useState<File | null>(null);
+    const [importTipo, setImportTipo] = useState("cadunico");
+    const [importTerritorioId, setImportTerritorioId] = useState("");
+    const [importLoading, setImportLoading] = useState(false);
+    const [importResult, setImportResult] = useState<{ sucesso?: boolean; inseridos?: number; ignorados?: number; erros?: string[]; error?: string } | null>(null);
+    const [dragOver, setDragOver] = useState(false);
 
     async function refreshData() {
         const [{ data: u }, { data: t }, { data: m }] = await Promise.all([
@@ -342,6 +350,127 @@ export default function ConfiguracoesPage() {
                     </div>
                 </div>
             )}
+
+            {/* === IMPORT SECTION === */}
+            <div className="card">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-50 rounded-xl">
+                            <Upload size={20} className="text-green-600" />
+                        </div>
+                        <div>
+                            <h2 className="font-semibold text-gray-900">Importar Dados</h2>
+                            <p className="text-xs text-gray-500">CadÚnico ou e-SUS APS (CSV)</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-6 space-y-5">
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Dados</label>
+                            <select className="input w-full" value={importTipo} onChange={e => setImportTipo(e.target.value)}>
+                                <option value="cadunico">CadÚnico</option>
+                                <option value="esus">e-SUS APS</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Território de Destino</label>
+                            <select className="input w-full" value={importTerritorioId} onChange={e => setImportTerritorioId(e.target.value)}>
+                                <option value="">Selecione o território...</option>
+                                {territorios.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Drag & Drop zone */}
+                    <div
+                        className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer ${dragOver ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50"
+                            }`}
+                        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                        onDragLeave={() => setDragOver(false)}
+                        onDrop={e => {
+                            e.preventDefault(); setDragOver(false);
+                            const f = e.dataTransfer.files[0];
+                            if (f) { setImportFile(f); setImportResult(null); }
+                        }}
+                        onClick={() => document.getElementById("import-file-input")?.click()}
+                    >
+                        <FileUp size={36} className={`mx-auto mb-3 ${dragOver ? "text-blue-500" : "text-gray-400"}`} />
+                        {importFile ? (
+                            <p className="text-sm font-medium text-blue-700">{importFile.name} ({(importFile.size / 1024).toFixed(1)} KB)</p>
+                        ) : (
+                            <>
+                                <p className="text-sm font-medium text-gray-600">Arraste um arquivo CSV aqui</p>
+                                <p className="text-xs text-gray-400 mt-1">ou clique para selecionar</p>
+                            </>
+                        )}
+                        <input
+                            id="import-file-input" type="file" className="hidden"
+                            accept=".csv,.xlsx"
+                            onChange={e => { const f = e.target.files?.[0]; if (f) { setImportFile(f); setImportResult(null); } }}
+                        />
+                    </div>
+
+                    {/* Columns guide */}
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                        <p className="font-semibold mb-1">Colunas esperadas no CSV (CadÚnico):</p>
+                        <p className="font-mono">nome_responsavel, nis_responsavel, endereco, renda_per_capita, situacao_rua, moradia_precaria, tem_crianca, tem_idoso, mae_solo, deficiente, desempregado</p>
+                        <p className="mt-2 font-semibold">Use 1 para Sim e 0 para Não nos campos booleanos. Separador: vírgula ou ponto-e-vírgula.</p>
+                    </div>
+
+                    <button
+                        disabled={!importFile || !importTerritorioId || importLoading}
+                        className="btn-primary w-full flex items-center justify-center gap-2 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={async () => {
+                            if (!importFile || !importTerritorioId || !municipio?.id) return;
+                            setImportLoading(true); setImportResult(null);
+                            const fd = new FormData();
+                            fd.append("file", importFile);
+                            fd.append("tipo", importTipo);
+                            fd.append("territorio_id", importTerritorioId);
+                            fd.append("municipio_id", municipio.id);
+                            try {
+                                const res = await fetch("/api/importar", { method: "POST", body: fd });
+                                const json = await res.json();
+                                setImportResult(json);
+                                if (json.sucesso) setImportFile(null);
+                            } catch (e: any) {
+                                setImportResult({ error: e.message });
+                            } finally { setImportLoading(false); }
+                        }}
+                    >
+                        {importLoading ? <><span className="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4" /> Importando...</> : <><Upload size={16} /> Importar Arquivo</>}
+                    </button>
+
+                    {/* Result feedback */}
+                    {importResult && (
+                        <div className={`p-4 rounded-xl border text-sm ${importResult.sucesso ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
+                            {importResult.sucesso ? (
+                                <div className="flex items-start gap-2">
+                                    <CheckCircle size={18} className="text-green-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-semibold">Importação concluída!</p>
+                                        <p>{importResult.inseridos} famílias importadas · {importResult.ignorados} ignoradas de {importResult.inseridos! + importResult.ignorados!} registros.</p>
+                                        {importResult.erros && importResult.erros.length > 0 && (
+                                            <div className="mt-2">
+                                                <p className="font-semibold text-amber-700">Avisos ({importResult.erros.length}):</p>
+                                                <ul className="list-disc list-inside text-xs mt-1 space-y-0.5 text-amber-700">
+                                                    {importResult.erros.map((e, i) => <li key={i}>{e}</li>)}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-start gap-2">
+                                    <AlertCircle size={18} className="text-red-600 shrink-0 mt-0.5" />
+                                    <p><span className="font-semibold">Erro:</span> {importResult.error}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

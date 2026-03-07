@@ -1,30 +1,51 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
     LayoutDashboard, Map, List, Search, BarChart2,
-    Settings, LogOut, Shield, ChevronRight
+    Settings, LogOut, ChevronRight
 } from "lucide-react";
 
 const navItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/painel", label: "Painel Territorial", icon: Map },
-    { href: "/listas", label: "Listas Inteligentes", icon: List },
-    { href: "/busca-ativa", label: "Busca Ativa", icon: Search },
-    { href: "/relatorios", label: "Relatórios", icon: BarChart2 },
-    { href: "/configuracoes", label: "Configurações", icon: Settings },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "AUDITOR_LGPD", "ADMIN_SISTEMA", "Gestor", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS", "Admin"] },
+    { href: "/painel", label: "Painel Territorial", icon: Map, roles: ["GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "Admin", "Gestor", "Coordenador"] },
+    { href: "/listas", label: "Listas Inteligentes", icon: List, roles: ["COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS"] },
+    { href: "/busca-ativa", label: "Busca Ativa", icon: Search, roles: ["COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS"] },
+    { href: "/relatorios", label: "Relatórios", icon: BarChart2, roles: ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "AUDITOR_LGPD", "Admin", "Gestor"] },
+    { href: "/configuracoes", label: "Configurações", icon: Settings, roles: ["ADMIN_SISTEMA", "Admin"] },
 ];
 
 export default function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const supabase = createClient();
+    const [profile, setProfile] = useState<any>(null);
+
+    useEffect(() => {
+        async function getProfile() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data } = await supabase
+                    .from("usuarios")
+                    .select("perfil")
+                    .eq("id", user.id)
+                    .single();
+                setProfile(data);
+            }
+        }
+        getProfile();
+    }, []);
 
     async function handleLogout() {
         await supabase.auth.signOut();
         router.push("/login");
     }
+
+    const filteredNavItems = navItems.filter(item =>
+        !profile || item.roles.includes(profile.perfil)
+    );
 
     return (
         <aside className="w-64 min-h-screen bg-[#1e3a8a] flex flex-col">
@@ -47,7 +68,7 @@ export default function Sidebar() {
 
             {/* Navigation */}
             <nav className="flex-1 px-3 py-4 space-y-1">
-                {navItems.map(({ href, label, icon: Icon }) => {
+                {filteredNavItems.map(({ href, label, icon: Icon }) => {
                     const active = pathname.startsWith(href);
                     return (
                         <Link key={href} href={href}

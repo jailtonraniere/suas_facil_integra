@@ -14,29 +14,61 @@ const BRAND_GRADIENT = "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)";
 
 export default function DashboardPage() {
     const supabase = createClient();
+    const [user, setUser] = useState<any>(null);
     const [kpis, setKpis] = useState<KpiDashboard[]>([]);
-    const [topFamilias, setTopFamilias] = useState<FamiliaScore[]>([]);
+    const [topFamilias, setTopFamilias] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [recalcLoading, setRecalcLoading] = useState(false);
 
-    useEffect(() => { loadData(); }, []);
+    useEffect(() => { loadInitialData(); }, []);
 
-    async function loadData() {
+    async function loadInitialData() {
         setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data: profile } = await supabase
+                .from("usuarios")
+                .select("*")
+                .eq("id", user.id)
+                .single();
+            setUser({ ...user, profile });
+            await loadDashboardData(profile);
+        }
+        setLoading(false);
+    }
+
+    async function loadDashboardData(profile: any) {
+        const isStrategic = ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "Gestor"].includes(profile?.perfil);
+        const isOperational = ["COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "Tecnico_CRAS", "Tecnico_UBS"].includes(profile?.perfil);
+
+        const kpiQuery = supabase.from("vw_kpis_dashboard_v2").select("*");
+
+        // Apply scoping to KPIs for operational/territorial roles
+        if (isOperational && profile.scope_territorio?.length > 0) {
+            kpiQuery.in("territorio_id", profile.scope_territorio);
+        }
+
+        const familiesQuery = isStrategic
+            ? supabase.from("vw_familias_pseudonimizada").select("*")
+            : supabase.from("vw_familias_nominativa").select("*");
+
+        if (isOperational && profile.scope_territorio?.length > 0) {
+            familiesQuery.in("territorio_id", profile.scope_territorio);
+        }
+
         const [{ data: k }, { data: f }] = await Promise.all([
-            supabase.from("vw_kpis_dashboard").select("*"),
-            supabase.from("vw_familias_score").select("*")
-                .order("score_familiar", { ascending: false }).limit(10),
+            kpiQuery,
+            familiesQuery.order("score_familiar", { ascending: false }).limit(10),
         ]);
+
         if (k) setKpis(k);
         if (f) setTopFamilias(f);
-        setLoading(false);
     }
 
     async function handleRecalcular() {
         setRecalcLoading(true);
         await fetch("/api/recalcular", { method: "POST" });
-        await loadData();
+        await loadDashboardData(user?.profile);
         setRecalcLoading(false);
     }
 
@@ -63,25 +95,32 @@ export default function DashboardPage() {
         </div>
     );
 
+    const profileLabel = user?.profile?.perfil || "Usuário";
+    const isStrategic = ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "Gestor"].includes(user?.profile?.perfil);
+
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-10">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">Dashboard Executivo</h1>
+                    <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">
+                        {isStrategic ? "Dashboard Executivo" : "Dashboard Operacional"}
+                    </h1>
                     <p className="text-gray-500 mt-1 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        Visão consolidada do Score de Risco Familiar
+                        Perfil: <span className="font-semibold text-blue-700">{profileLabel}</span> • Visão consolidada
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-400 font-medium bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200">
                         Última atualização: {new Date().toLocaleDateString("pt-BR")}
                     </span>
-                    <button onClick={handleRecalcular} disabled={recalcLoading} className="btn-secondary shadow-sm">
-                        <RefreshCw size={16} className={recalcLoading ? "animate-spin" : ""} />
-                        Recalcular
-                    </button>
+                    {["ADMIN_SISTEMA", "GESTOR_OPERACIONAL", "Admin", "Gestor"].includes(user?.profile?.perfil) && (
+                        <button onClick={handleRecalcular} disabled={recalcLoading} className="btn-secondary shadow-sm">
+                            <RefreshCw size={16} className={recalcLoading ? "animate-spin" : ""} />
+                            Recalcular
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -147,45 +186,57 @@ export default function DashboardPage() {
                     <table className="w-full text-sm">
                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                             <tr>
-                                {["Família", "Território", "Score Social", "Score Saúde", "Score Familiar", "Classificação", "Ação"].map(h => (
+                                {[isStrategic ? "Caso (ID)" : "Família", "Território", "Score Social", "Score Saúde", "Score Familiar", "Classificação", "Ação"].map(h => (
                                     <th key={h} className="px-4 py-3 text-left font-medium">{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {topFamilias.map((f) => (
-                                <tr key={f.familia_id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-4 py-3 font-medium text-gray-900">{f.nome_responsavel}</td>
-                                    <td className="px-4 py-3 text-gray-600">{f.territorio}</td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-16 bg-gray-100 rounded-full h-1.5">
-                                                <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${scoreBar(f.score_social || 0)}%` }} />
+                            {topFamilias.map((f) => {
+                                const id = isStrategic ? f.case_id : f.familia_id;
+                                const displayName = isStrategic ? `Família #${f.case_id.slice(0, 8)}` : f.nome_responsavel;
+
+                                return (
+                                    <tr key={id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-4 py-3 font-medium text-gray-900">
+                                            {displayName}
+                                            {isStrategic && f.marcador_social_critico && (
+                                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xxs font-medium bg-red-100 text-red-800">
+                                                    Vulnerabilidade
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-600">{f.territorio}</td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-16 bg-gray-100 rounded-full h-1.5">
+                                                    <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${scoreBar(f.score_social || 0)}%` }} />
+                                                </div>
+                                                <span className="text-xs text-gray-600">{f.score_social?.toFixed(1) || "—"}</span>
                                             </div>
-                                            <span className="text-xs text-gray-600">{f.score_social?.toFixed(1) || "—"}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-16 bg-gray-100 rounded-full h-1.5">
-                                                <div className="h-1.5 rounded-full bg-purple-500" style={{ width: `${scoreBar(f.score_saude || 0)}%` }} />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-16 bg-gray-100 rounded-full h-1.5">
+                                                    <div className="h-1.5 rounded-full bg-purple-500" style={{ width: `${scoreBar(f.score_saude || 0)}%` }} />
+                                                </div>
+                                                <span className="text-xs text-gray-600">{f.score_saude?.toFixed(1) || "—"}</span>
                                             </div>
-                                            <span className="text-xs text-gray-600">{f.score_saude?.toFixed(1) || "—"}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <span className="font-bold text-gray-900">{f.score_familiar?.toFixed(2) || "—"}</span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <span className={getRiscBadgeClass(f.classificacao_risco)}>
-                                            {f.classificacao_risco || "—"}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-600 text-xs max-w-32 truncate">
-                                        {f.acao_recomendada || "—"}
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="font-bold text-gray-900">{f.score_familiar?.toFixed(2) || "—"}</span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={getRiscBadgeClass(f.classificacao_risco)}>
+                                                {f.classificacao_risco || "—"}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-600 text-xs max-w-32 truncate">
+                                            {f.acao_recomendada || "—"}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             {topFamilias.length === 0 && (
                                 <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">
                                     Nenhuma família encontrada. Importe dados para começar.
@@ -217,7 +268,7 @@ function KpiCard({ label, value, icon, color, sub }: {
             <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
                 {icon}
             </div>
-            
+
             <div className="relative z-10 flex flex-col h-full justify-between">
                 <div className="flex items-start justify-between">
                     <p className="text-xs font-bold uppercase tracking-widest opacity-80">{label}</p>
@@ -225,7 +276,7 @@ function KpiCard({ label, value, icon, color, sub }: {
                         {icon}
                     </div>
                 </div>
-                
+
                 <div className="mt-4">
                     <p className="text-3xl font-black tracking-tight">{value}</p>
                     {sub && <p className="text-[10px] mt-1 font-medium opacity-90 uppercase tracking-wide">{sub}</p>}

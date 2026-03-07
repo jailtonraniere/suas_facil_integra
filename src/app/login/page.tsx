@@ -3,7 +3,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Mail, Lock, Eye, Facebook, Instagram, Linkedin, Globe, MessageSquare, Handshake } from "lucide-react";
+import { Mail, Lock, Eye, Facebook, Instagram, Linkedin, Globe } from "lucide-react";
 
 export default function LoginPage() {
     const supabase = createClient();
@@ -32,7 +32,7 @@ export default function LoginPage() {
                     <img
                         src="/logo.png"
                         alt="SUAS Fácil Integra"
-                        className="h-28 object-contain"
+                        className="h-44 object-contain"
                     />
                     <div className="w-full h-px bg-gray-100 mt-2"></div>
                 </div>
@@ -99,24 +99,22 @@ export default function LoginPage() {
 
                     {/* Social Media Row */}
                     <div className="flex items-center justify-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#3B5998] flex items-center justify-center text-white cursor-pointer hover:opacity-80">
+                        <a href="https://www.facebook.com/suasfacil" target="_blank" rel="noopener noreferrer"
+                            className="w-10 h-10 rounded-full bg-[#3B5998] flex items-center justify-center text-white hover:opacity-80 transition-opacity">
                             <Facebook size={18} fill="currentColor" />
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-500 to-purple-500 flex items-center justify-center text-white cursor-pointer hover:opacity-80">
+                        </a>
+                        <a href="https://www.instagram.com/suasfacil/" target="_blank" rel="noopener noreferrer"
+                            className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-500 to-purple-500 flex items-center justify-center text-white hover:opacity-80 transition-opacity">
                             <Instagram size={18} />
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-[#0077B5] flex items-center justify-center text-white cursor-pointer hover:opacity-80">
+                        </a>
+                        <a href="https://www.linkedin.com/company/suasfacil/" target="_blank" rel="noopener noreferrer"
+                            className="w-10 h-10 rounded-full bg-[#0077B5] flex items-center justify-center text-white hover:opacity-80 transition-opacity">
                             <Linkedin size={18} fill="currentColor" />
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-[#2EAA55] flex items-center justify-center text-white cursor-pointer hover:opacity-80">
+                        </a>
+                        <a href="https://suasfacil.com.br/" target="_blank" rel="noopener noreferrer"
+                            className="w-10 h-10 rounded-full bg-[#2EAA55] flex items-center justify-center text-white hover:opacity-80 transition-opacity">
                             <Globe size={18} />
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-[#3B82F6] flex items-center justify-center text-white cursor-pointer hover:opacity-80">
-                            <MessageSquare size={18} fill="currentColor" />
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-[#F59E0B] flex items-center justify-center text-white cursor-pointer hover:opacity-80">
-                            <Handshake size={18} />
-                        </div>
+                        </a>
                     </div>
                 </div>
             </div>

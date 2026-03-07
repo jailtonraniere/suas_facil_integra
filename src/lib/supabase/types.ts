@@ -1,6 +1,13 @@
 // TypeScript types for DB tables (V2 ADJUSTED)
 export type RiscLevel = "CRÍTICA" | "ALTA" | "MODERADA" | "BAIXA";
-export type UserProfile = "Gestor" | "Coordenador" | "Tecnico" | "Admin" | "Tecnico_CRAS" | "Tecnico_UBS";
+export type UserProfile =
+    | "SECRETARIO_MUNICIPAL"
+    | "GESTOR_OPERACIONAL"
+    | "COORDENADOR_UNIDADE"
+    | "TECNICO_REFERENCIA"
+    | "AUDITOR_LGPD"
+    | "ADMIN_SISTEMA"
+    | "Gestor" | "Coordenador" | "Tecnico" | "Admin" | "Tecnico_CRAS" | "Tecnico_UBS";
 
 export interface Municipio {
     id: string; nome: string; estado: string; cnpj?: string; email?: string; ativo: boolean;
@@ -59,7 +66,9 @@ export interface Encaminhamento {
 }
 export interface Usuario {
     id: string; nome: string; email: string; perfil: UserProfile;
-    municipio_id?: string; territorio_id?: string; ativo: boolean;
+    municipio_id?: string; territorio_id?: string;
+    scope_territorio?: string[]; scope_unidade?: string[]; scope_equipe?: string[];
+    must_change_password: boolean; ativo: boolean;
 }
 
 // Helper types for Views
