@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { getRiscBadgeClass, formatDate, scoreBar } from "@/lib/utils";
+import { getRiscBadgeClass, formatDate, scoreBar, normalizeProfile, PROFILE_LABELS } from "@/lib/utils";
 import type { KpiDashboard, FamiliaScore } from "@/lib/supabase/types";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -28,7 +28,7 @@ export default function DashboardPage() {
         if (user) {
             const { data: profile } = await supabase
                 .from("usuarios")
-                .select("*")
+                .select("*, municipio:municipios(nome)")
                 .eq("id", user.id)
                 .single();
             setUser({ ...user, profile });
@@ -38,8 +38,9 @@ export default function DashboardPage() {
     }
 
     async function loadDashboardData(profile: any) {
-        const isStrategic = ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "Gestor"].includes(profile?.perfil);
-        const isOperational = ["COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "Tecnico_CRAS", "Tecnico_UBS"].includes(profile?.perfil);
+        const perfil = normalizeProfile(profile?.perfil);
+        const isStrategic = ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL"].includes(perfil);
+        const isOperational = ["COORDENADOR_UNIDADE", "TECNICO_REFERENCIA"].includes(perfil);
 
         const kpiQuery = supabase.from("vw_kpis_dashboard_v2").select("*");
 
@@ -95,8 +96,9 @@ export default function DashboardPage() {
         </div>
     );
 
-    const profileLabel = user?.profile?.perfil || "Usuário";
-    const isStrategic = ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "Gestor"].includes(user?.profile?.perfil);
+    const canonicalPerfil = normalizeProfile(user?.profile?.perfil);
+    const profileLabel = PROFILE_LABELS[canonicalPerfil] || user?.profile?.perfil || "Usuário";
+    const isStrategic = ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL"].includes(canonicalPerfil);
 
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-10">
@@ -106,16 +108,24 @@ export default function DashboardPage() {
                     <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">
                         {isStrategic ? "Dashboard Executivo" : "Dashboard Operacional"}
                     </h1>
-                    <p className="text-gray-500 mt-1 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        Perfil: <span className="font-semibold text-blue-700">{profileLabel}</span> • Visão consolidada
-                    </p>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                        <p className="text-gray-600 font-bold text-sm bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+                            Olá, <span className="text-blue-900">{user?.profile?.nome || "Usuário"}</span>
+                        </p>
+                        <p className="text-gray-500 text-sm flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            Perfil: <span className="font-semibold text-blue-700">{profileLabel}</span>
+                        </p>
+                        <p className="text-gray-500 text-sm flex items-center gap-2">
+                            Território: <span className="font-semibold text-gray-700">{user?.profile?.municipio?.nome || "Mauá"}</span>
+                        </p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-400 font-medium bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200">
                         Última atualização: {new Date().toLocaleDateString("pt-BR")}
                     </span>
-                    {["ADMIN_SISTEMA", "GESTOR_OPERACIONAL", "Admin", "Gestor"].includes(user?.profile?.perfil) && (
+                    {["ADMIN_SISTEMA", "GESTOR_OPERACIONAL"].includes(normalizeProfile(user?.profile?.perfil)) && (
                         <button onClick={handleRecalcular} disabled={recalcLoading} className="btn-secondary shadow-sm">
                             <RefreshCw size={16} className={recalcLoading ? "animate-spin" : ""} />
                             Recalcular

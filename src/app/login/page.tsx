@@ -30,9 +30,9 @@ export default function LoginPage() {
                 {/* Logo Section */}
                 <div className="flex flex-col items-center text-center space-y-4 w-full">
                     <img
-                        src="/logo.png"
+                        src="/logo_full.png"
                         alt="SUAS Fácil Integra"
-                        className="h-44 object-contain"
+                        className="h-32 object-contain"
                     />
                     <div className="w-full h-px bg-gray-100 mt-2"></div>
                 </div>

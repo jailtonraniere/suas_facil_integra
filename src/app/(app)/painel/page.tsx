@@ -17,15 +17,45 @@ const RISK_COLORS: Record<string, string> = {
 
 export default function PainelTerritorialPage() {
     const supabase = createClient();
-    const [kpis, setKpis] = useState<KpiDashboard[]>([]);
+    const [user, setUser] = useState<any>(null);
+    const [kpis, setKpis] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => { loadData(); }, []);
+    useEffect(() => {
+        async function getProfile() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data } = await supabase.from("usuarios").select("*, perfil").eq("id", user.id).single();
+                setUser(data);
+            }
+        }
+        getProfile().then(() => loadData());
+    }, []);
 
     async function loadData() {
         setLoading(true);
-        const { data } = await supabase.from("vw_kpis_dashboard").select("*");
-        if (data) setKpis(data as KpiDashboard[]);
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        let currentProfile = user;
+        if (!currentProfile && authUser) {
+            const { data } = await supabase.from("usuarios").select("*, perfil").eq("id", authUser.id).single();
+            currentProfile = data;
+            setUser(data);
+        }
+
+        if (!currentProfile) {
+            setLoading(false);
+            return;
+        }
+
+        let query = supabase.from("vw_kpis_dashboard_v2").select("*");
+
+        // Apply scoping if user has territories defined
+        if (currentProfile.scope_territorio && currentProfile.scope_territorio.length > 0) {
+            query = query.in("territorio_id", currentProfile.scope_territorio);
+        }
+
+        const { data } = await query;
+        if (data) setKpis(data);
         setLoading(false);
     }
 

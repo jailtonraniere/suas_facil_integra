@@ -7,7 +7,8 @@ import { Search, Filter, Download, RefreshCw, ChevronUp, ChevronDown } from "luc
 
 export default function ListasInteligentesPage() {
     const supabase = createClient();
-    const [familias, setFamilias] = useState<FamiliaScore[]>([]);
+    const [user, setUser] = useState<any>(null);
+    const [familias, setFamilias] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [filtroClassif, setFiltroClassif] = useState<RiscLevel | "">("");
@@ -17,19 +18,42 @@ export default function ListasInteligentesPage() {
     const [page, setPage] = useState(0);
     const PAGE_SIZE = 20;
 
+    useEffect(() => {
+        async function getProfile() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data } = await supabase.from("usuarios").select("*, perfil").eq("id", user.id).single();
+                setUser(data);
+            }
+        }
+        getProfile();
+    }, []);
+
     const loadData = useCallback(async () => {
+        if (!user) return;
         setLoading(true);
-        let query = supabase.from("vw_familias_score").select("*");
+
+        const isStrategic = ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "Gestor"].includes(user.perfil);
+        const viewName = isStrategic ? "vw_familias_pseudonimizada" : "vw_familias_nominativa";
+
+        let query = supabase.from(viewName).select("*");
+
         if (filtroClassif) query = query.eq("classificacao_risco", filtroClassif);
         if (filtroTerritorio) query = query.eq("territorio_id", filtroTerritorio);
-        if (search) query = query.ilike("nome_responsavel", `%${search}%`);
+
+        // Handle search differently for pseudonimized view
+        if (search && !isStrategic) {
+            query = query.ilike("nome", `%${search}%`);
+        }
+
         query = query.order("score_familiar", { ascending: sortDir === "asc" })
             .not("score_familiar", "is", null)
             .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
         const { data } = await query;
         if (data) setFamilias(data);
         setLoading(false);
-    }, [filtroClassif, filtroTerritorio, search, sortDir, page]);
+    }, [user, filtroClassif, filtroTerritorio, search, sortDir, page]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -43,7 +67,7 @@ export default function ListasInteligentesPage() {
         const rows = [
             ["Família", "Território", "Score Social", "Score Saúde", "Score Familiar", "Classificação", "Ação", "Última Atualização"],
             ...familias.map(f => [
-                f.nome_responsavel, f.territorio,
+                f.nome || f.identificador, f.territorio,
                 f.score_social?.toFixed(2), f.score_saude?.toFixed(2),
                 f.score_familiar?.toFixed(2), f.classificacao_risco,
                 f.acao_recomendada, formatDate(f.data_recalculo),
@@ -136,7 +160,12 @@ export default function ListasInteligentesPage() {
                         ) : familias.map((f, i) => (
                             <tr key={f.familia_id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-4 py-3 text-gray-400 text-xs">{page * PAGE_SIZE + i + 1}</td>
-                                <td className="px-4 py-3 font-medium text-gray-900">{f.nome_responsavel}</td>
+                                <td className="px-4 py-3 font-medium text-gray-900">
+                                    <div className="flex flex-col">
+                                        <span>{f.nome || f.identificador}</span>
+                                        {f.case_id && <span className="text-[10px] text-gray-400 font-mono">{f.case_id}</span>}
+                                    </div>
+                                </td>
                                 <td className="px-4 py-3 text-gray-600">{f.territorio}</td>
                                 <td className="px-4 py-3 font-mono text-blue-700">{f.score_social?.toFixed(2) ?? "—"}</td>
                                 <td className="px-4 py-3 font-mono text-purple-700">{f.score_saude?.toFixed(2) ?? "—"}</td>

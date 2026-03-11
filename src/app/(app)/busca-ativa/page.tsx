@@ -13,8 +13,9 @@ type BuscaAtiva = {
 
 export default function BuscaAtivaPage() {
     const supabase = createClient();
+    const [user, setUser] = useState<any>(null);
     const [buscas, setBuscas] = useState<BuscaAtiva[]>([]);
-    const [familiasCriticas, setFamiliasCriticas] = useState<FamiliaScore[]>([]);
+    const [familiasCriticas, setFamiliasCriticas] = useState<any[]>([]);
     const [territorios, setTerritorios] = useState<{ id: string; nome: string }[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -25,13 +26,39 @@ export default function BuscaAtivaPage() {
     const [filtroClassif, setFiltroClassif] = useState("CRÍTICA");
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => { loadData(); }, []);
+    useEffect(() => {
+        async function getProfile() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data } = await supabase.from("usuarios").select("*, perfil").eq("id", user.id).single();
+                setUser(data);
+            }
+        }
+        getProfile().then(() => loadData());
+    }, []);
 
     async function loadData() {
         setLoading(true);
+        // We need the profile to know which view to use
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        let currentProfile = user;
+        if (!currentProfile && authUser) {
+            const { data } = await supabase.from("usuarios").select("*, perfil").eq("id", authUser.id).single();
+            currentProfile = data;
+            setUser(data);
+        }
+
+        if (!currentProfile) {
+            setLoading(false);
+            return;
+        }
+
+        const isStrategic = ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "Gestor"].includes(currentProfile.perfil);
+        const viewName = isStrategic ? "vw_familias_pseudonimizada" : "vw_familias_nominativa";
+
         const [{ data: b }, { data: f }, { data: t }] = await Promise.all([
             supabase.from("buscas_ativas").select("*, territorios(nome)").order("criado_em", { ascending: false }).limit(20),
-            supabase.from("vw_familias_score").select("*").eq("classificacao_risco", "CRÍTICA").order("score_familiar", { ascending: false }).limit(50),
+            supabase.from(viewName).select("*").eq("classificacao_risco", "CRÍTICA").order("score_familiar", { ascending: false }).limit(50),
             supabase.from("territorios").select("id, nome"),
         ]);
         if (b) setBuscas(b as BuscaAtiva[]);
@@ -134,9 +161,16 @@ export default function BuscaAtivaPage() {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {familiasCriticas.map(f => (
-                                <tr key={f.familia_id} className="hover:bg-red-50 transition-colors">
-                                    <td className="px-4 py-3 font-medium text-gray-900">{f.nome_responsavel}</td>
-                                    <td className="px-4 py-3 text-gray-500 text-xs">{f.endereco || "—"}</td>
+                                <tr key={f.familia_id || f.case_id} className="hover:bg-red-50 transition-colors">
+                                    <td className="px-4 py-3 font-medium text-gray-900">
+                                        <div className="flex flex-col">
+                                            <span>{f.nome || f.identificador}</span>
+                                            {f.case_id && <span className="text-[10px] text-gray-400 font-mono">{f.case_id}</span>}
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-500 text-xs">
+                                        {f.logradouro ? `${f.logradouro}${f.numero ? `, ${f.numero}` : ""}` : "—"}
+                                    </td>
                                     <td className="px-4 py-3 text-gray-600">{f.territorio}</td>
                                     <td className="px-4 py-3 font-bold text-red-700">{f.score_familiar?.toFixed(2)}</td>
                                     <td className="px-4 py-3"><span className={getRiscBadgeClass(f.classificacao_risco)}>{f.classificacao_risco}</span></td>
