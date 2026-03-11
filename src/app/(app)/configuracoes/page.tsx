@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { normalizeProfile, PROFILE_LABELS } from "@/lib/utils";
-import { Users, MapPin, Building, Plus, Pencil, Trash2, X, Save, AlertCircle, Upload, FileUp, CheckCircle, AlertTriangle } from "lucide-react";
+import { Users, MapPin, Building, Plus, Pencil, Trash2, X, Save, AlertCircle, Upload, FileUp, CheckCircle, AlertTriangle, Mail, Loader2 } from "lucide-react";
 import type { Usuario, Territorio, Municipio } from "@/lib/supabase/types";
 
 export default function ConfiguracoesPage() {
@@ -25,6 +25,10 @@ export default function ConfiguracoesPage() {
     } | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
+
+    // Invite state
+    const [inviteLoading, setInviteLoading] = useState(false);
+    const [inviteResult, setInviteResult] = useState<{ sucesso: boolean; msg: string } | null>(null);
 
     const [formDataUser, setFormDataUser] = useState({ nome: "", email: "", perfil: "Tecnico_CRAS", ativo: true });
     const [formDataTerritory, setFormDataTerritory] = useState({ nome: "", tipo: "CRAS", ativo: true });
@@ -79,17 +83,47 @@ export default function ConfiguracoesPage() {
 
     const handleSaveUser = async (e: React.FormEvent) => {
         e.preventDefault();
+        setInviteResult(null);
         try {
             const client = supabase as any;
             if (editingUser) {
                 const { error } = await client.from("usuarios").update(formDataUser).eq("id", editingUser.id);
                 if (error) throw error;
+                setIsUserModalOpen(false);
+                refreshData();
             } else {
+                // 1) Insere na tabela de usuários
                 const { error } = await client.from("usuarios").insert([{ ...formDataUser, municipio_id: municipio?.id }]);
                 if (error) throw error;
+
+                // 2) Envia convite por e-mail via Supabase Auth
+                setInviteLoading(true);
+                try {
+                    const res = await fetch("/api/convidar-usuario", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            email: formDataUser.email,
+                            nome: formDataUser.nome,
+                            perfil: formDataUser.perfil,
+                        }),
+                    });
+                    const json = await res.json();
+                    if (!res.ok || json.error) {
+                        // Usuário foi criado mas o e-mail não foi enviado — reportar mas não bloquear
+                        setInviteResult({ sucesso: false, msg: json.error ?? "Erro ao enviar convite." });
+                    } else {
+                        setInviteResult({ sucesso: true, msg: `Convite enviado para ${formDataUser.email}` });
+                    }
+                } catch (invErr: any) {
+                    setInviteResult({ sucesso: false, msg: "Erro ao enviar convite: " + invErr.message });
+                } finally {
+                    setInviteLoading(false);
+                }
+
+                refreshData();
+                // Não fecha o modal para o usuário ver o resultado do convite
             }
-            setIsUserModalOpen(false);
-            refreshData();
         } catch (err: any) {
             alert("Erro ao salvar usuário: " + err.message);
         }
@@ -338,14 +372,53 @@ export default function ConfiguracoesPage() {
                                 </div>
                             </div>
                             {!editingUser && (
-                                <div className="bg-amber-50 p-4 rounded-xl flex gap-3 text-amber-800 text-sm">
-                                    <AlertCircle size={20} className="shrink-0" />
-                                    <p>O usuário será convidado via e-mail para definir sua senha no primeiro acesso.</p>
-                                </div>
+                                <>
+                                    {/* Estado inicial — antes de salvar */}
+                                    {!inviteResult && !inviteLoading && (
+                                        <div className="bg-blue-50 p-4 rounded-xl flex gap-3 text-blue-800 text-sm">
+                                            <Mail size={20} className="shrink-0 mt-0.5 text-blue-500" />
+                                            <p>Um e-mail de convite será enviado automaticamente para o usuário definir sua senha no primeiro acesso.</p>
+                                        </div>
+                                    )}
+                                    {/* Enviando convite */}
+                                    {inviteLoading && (
+                                        <div className="bg-blue-50 p-4 rounded-xl flex gap-3 text-blue-700 text-sm items-center">
+                                            <Loader2 size={18} className="animate-spin shrink-0" />
+                                            <p>Enviando convite por e-mail...</p>
+                                        </div>
+                                    )}
+                                    {/* Resultado: sucesso */}
+                                    {inviteResult?.sucesso && (
+                                        <div className="bg-green-50 border border-green-200 p-4 rounded-xl flex gap-3 text-green-800 text-sm">
+                                            <CheckCircle size={20} className="shrink-0 mt-0.5 text-green-600" />
+                                            <div>
+                                                <p className="font-semibold">Convite enviado com sucesso!</p>
+                                                <p className="text-green-700">{inviteResult.msg}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* Resultado: erro */}
+                                    {inviteResult && !inviteResult.sucesso && (
+                                        <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex gap-3 text-amber-800 text-sm">
+                                            <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                                            <div>
+                                                <p className="font-semibold">Usuário criado, mas o e-mail não foi enviado.</p>
+                                                <p className="text-amber-700">{inviteResult.msg}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
                             <div className="pt-4 flex justify-end gap-3">
-                                <button type="button" onClick={() => setIsUserModalOpen(false)} className="px-5 py-2.5 text-gray-600 font-semibold text-sm">Cancelar</button>
-                                <button type="submit" className="btn-primary px-8 flex items-center gap-2"><Save size={18} /> Salvar</button>
+                                <button type="button" onClick={() => { setIsUserModalOpen(false); setInviteResult(null); }} className="px-5 py-2.5 text-gray-600 font-semibold text-sm">
+                                    {inviteResult?.sucesso ? "Fechar" : "Cancelar"}
+                                </button>
+                                {!inviteResult?.sucesso && (
+                                    <button type="submit" disabled={inviteLoading} className="btn-primary px-8 flex items-center gap-2 disabled:opacity-60">
+                                        {inviteLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={18} />}
+                                        {editingUser ? "Salvar" : inviteLoading ? "Criando..." : "Criar e Convidar"}
+                                    </button>
+                                )}
                             </div>
                         </form>
                     </div>
