@@ -87,16 +87,13 @@ export default function ConfiguracoesPage() {
         try {
             const client = supabase as any;
             if (editingUser) {
+                // Edição: atualiza diretamente (usuário já existe no Auth)
                 const { error } = await client.from("usuarios").update(formDataUser).eq("id", editingUser.id);
                 if (error) throw error;
                 setIsUserModalOpen(false);
                 refreshData();
             } else {
-                // 1) Insere na tabela de usuários
-                const { error } = await client.from("usuarios").insert([{ ...formDataUser, municipio_id: municipio?.id }]);
-                if (error) throw error;
-
-                // 2) Envia convite por e-mail via Supabase Auth
+                // Novo usuário: a API route faz o convite Auth E o insert com UUID correto
                 setInviteLoading(true);
                 try {
                     const res = await fetch("/api/convidar-usuario", {
@@ -106,28 +103,28 @@ export default function ConfiguracoesPage() {
                             email: formDataUser.email,
                             nome: formDataUser.nome,
                             perfil: formDataUser.perfil,
+                            ativo: formDataUser.ativo,
+                            municipio_id: municipio?.id,
                         }),
                     });
                     const json = await res.json();
                     if (!res.ok || json.error) {
-                        // Usuário foi criado mas o e-mail não foi enviado — reportar mas não bloquear
-                        setInviteResult({ sucesso: false, msg: json.error ?? "Erro ao enviar convite." });
+                        setInviteResult({ sucesso: false, msg: json.error ?? "Erro ao criar usuário e enviar convite." });
                     } else {
                         setInviteResult({ sucesso: true, msg: `Convite enviado para ${formDataUser.email}` });
+                        refreshData();
                     }
                 } catch (invErr: any) {
-                    setInviteResult({ sucesso: false, msg: "Erro ao enviar convite: " + invErr.message });
+                    setInviteResult({ sucesso: false, msg: "Erro: " + invErr.message });
                 } finally {
                     setInviteLoading(false);
                 }
-
-                refreshData();
-                // Não fecha o modal para o usuário ver o resultado do convite
             }
         } catch (err: any) {
             alert("Erro ao salvar usuário: " + err.message);
         }
     };
+
 
     const handleSaveTerritory = async (e: React.FormEvent) => {
         e.preventDefault();
