@@ -311,11 +311,17 @@ export default function ConfiguracoesPage() {
                                         value={formDataUser.perfil}
                                         onChange={e => setFormDataUser({ ...formDataUser, perfil: e.target.value })}
                                     >
-                                        <option value="Admin">Secretário Municipal</option>
-                                        <option value="Gestor">Gestor Operacional</option>
-                                        <option value="Coordenador">Coordenador de Unidade</option>
-                                        <option value="Tecnico_CRAS">Técnico de Referência (CRAS)</option>
-                                        <option value="Tecnico_UBS">Técnico de Referência (UBS)</option>
+                                        <optgroup label="── Equipe SUAS Fácil ──">
+                                            <option value="Super_Admin">⭐ Super Admin · SUAS Fácil</option>
+                                            <option value="Suporte_Tecnico">🔧 Suporte Técnico · SUAS Fácil</option>
+                                        </optgroup>
+                                        <optgroup label="── Perfis Municipais ──">
+                                            <option value="Admin">Secretário Municipal</option>
+                                            <option value="Gestor">Gestor Operacional</option>
+                                            <option value="Coordenador">Coordenador de Unidade</option>
+                                            <option value="Tecnico_CRAS">Técnico de Referência (CRAS)</option>
+                                            <option value="Tecnico_UBS">Técnico de Referência (UBS)</option>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div className="space-y-1">

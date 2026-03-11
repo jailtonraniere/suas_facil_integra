@@ -6,7 +6,10 @@ import type { RiscLevel } from "./supabase/types";
 // Mapeia perfis legados (banco antigo) para os perfis canônicos do sistema.
 // Isso garante compatibilidade sem precisar atualizar o banco.
 const PROFILE_ALIAS_MAP: Record<string, string> = {
-    // Legados → Canônicos
+    // Perfis equipe SUAS Fácil (acesso máximo)
+    "Super_Admin":         "SUASFACIL_ADMIN",
+    "Suporte_Tecnico":     "SUASFACIL_SUPORTE",
+    // Perfis municipais legados → Canônicos
     "Admin":        "SECRETARIO_MUNICIPAL",
     "Gestor":       "GESTOR_OPERACIONAL",
     "Coordenador":  "COORDENADOR_UNIDADE",
@@ -23,6 +26,10 @@ export function normalizeProfile(perfil?: string | null): string {
 
 /** Labels amigáveis em PT-BR para cada perfil canônico. */
 export const PROFILE_LABELS: Record<string, string> = {
+    // ─── Equipe interna SUAS Fácil ──────────────────
+    SUASFACIL_ADMIN:       "Super Admin · SUAS Fácil",
+    SUASFACIL_SUPORTE:     "Suporte Técnico · SUAS Fácil",
+    // ─── Perfis municipais ──────────────────────────
     SECRETARIO_MUNICIPAL:  "Secretário Municipal",
     GESTOR_OPERACIONAL:    "Gestor Operacional",
     COORDENADOR_UNIDADE:   "Coordenador de Unidade",
@@ -30,6 +37,14 @@ export const PROFILE_LABELS: Record<string, string> = {
     AUDITOR_LGPD:          "Auditor LGPD",
     ADMIN_SISTEMA:         "Administrador do Sistema",
 };
+
+/** Perfis que pertencem à equipe interna do SUAS Fácil (acesso irrestrito). */
+export const SUASFACIL_PROFILES = ["SUASFACIL_ADMIN", "SUASFACIL_SUPORTE"] as const;
+
+/** Retorna true se o perfil normalizado pertence à equipe interna SUAS Fácil. */
+export function isSuasFacilTeam(perfil?: string | null): boolean {
+    return SUASFACIL_PROFILES.includes(normalizeProfile(perfil) as any);
+}
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));

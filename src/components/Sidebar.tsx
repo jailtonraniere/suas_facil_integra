@@ -3,26 +3,47 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { normalizeProfile, PROFILE_LABELS } from "@/lib/utils";
+import { normalizeProfile, PROFILE_LABELS, isSuasFacilTeam } from "@/lib/utils";
 import {
     LayoutDashboard, Map, List, Search, BarChart2,
-    Settings, LogOut, ChevronRight, HelpCircle
+    Settings, LogOut, ChevronRight, HelpCircle, Shield
 } from "lucide-react";
 
 const navItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "AUDITOR_LGPD", "ADMIN_SISTEMA", "Gestor", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS", "Admin"] },
-    { href: "/painel", label: "Painel Territorial", icon: Map, roles: ["GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "Admin", "Gestor", "Coordenador"] },
-    { href: "/listas", label: "Listas Inteligentes", icon: List, roles: ["GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "ADMIN_SISTEMA", "Admin", "Gestor", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS"] },
-    { href: "/busca-ativa", label: "Busca Ativa", icon: Search, roles: ["GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "ADMIN_SISTEMA", "Admin", "Gestor", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS"] },
-    { href: "/relatorios", label: "Relatórios", icon: BarChart2, roles: ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "AUDITOR_LGPD", "ADMIN_SISTEMA", "Admin", "Gestor"] },
-    { href: "/configuracoes", label: "Configurações", icon: Settings, roles: ["ADMIN_SISTEMA", "Admin"] },
-    { href: "/ajuda", label: "Ajuda", icon: HelpCircle, roles: ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "AUDITOR_LGPD", "ADMIN_SISTEMA", "Gestor", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS", "Admin"] },
+    {
+        href: "/dashboard",   label: "Dashboard",         icon: LayoutDashboard,
+        roles: ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "AUDITOR_LGPD", "ADMIN_SISTEMA", "Admin", "Gestor", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS"],
+    },
+    {
+        href: "/painel",      label: "Painel Territorial", icon: Map,
+        roles: ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "Admin", "Gestor", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS"],
+    },
+    {
+        href: "/listas",      label: "Listas Inteligentes", icon: List,
+        roles: ["GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "ADMIN_SISTEMA", "Admin", "Gestor", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS"],
+    },
+    {
+        href: "/busca-ativa", label: "Busca Ativa",        icon: Search,
+        roles: ["GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "ADMIN_SISTEMA", "Admin", "Gestor", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS"],
+    },
+    {
+        href: "/relatorios",  label: "Relatórios",         icon: BarChart2,
+        roles: ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "AUDITOR_LGPD", "ADMIN_SISTEMA", "Admin", "Gestor"],
+    },
+    {
+        href: "/configuracoes", label: "Configurações",   icon: Settings,
+        roles: ["ADMIN_SISTEMA", "SECRETARIO_MUNICIPAL", "Admin"],
+    },
+    {
+        href: "/ajuda",       label: "Ajuda",              icon: HelpCircle,
+        roles: ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL", "COORDENADOR_UNIDADE", "TECNICO_REFERENCIA", "AUDITOR_LGPD", "ADMIN_SISTEMA", "Admin", "Gestor", "Coordenador", "Tecnico_CRAS", "Tecnico_UBS"],
+    },
 ];
 
 export default function Sidebar() {
-    const pathname = usePathname();
-    const router = useRouter();
-    const supabase = createClient();
+    const pathname  = usePathname();
+    const router    = useRouter();
+    const supabase  = createClient();
     const [profile, setProfile] = useState<any>(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
 
@@ -48,12 +69,15 @@ export default function Sidebar() {
     }
 
     const canonicalPerfil = normalizeProfile(profile?.perfil);
+    const isSuperUser     = isSuasFacilTeam(profile?.perfil);
 
-    // Aguarda o perfil carregar antes de filtrar: evita exibir todos os menus
-    // temporariamente enquanto a consulta ao banco ainda não retornou.
+    // Super Admin e Suporte SUAS Fácil veem TUDO.
+    // Demais perfis têm filtro de roles.
     const filteredNavItems = loadingProfile
         ? []
-        : navItems.filter(item => item.roles.includes(canonicalPerfil));
+        : isSuperUser
+            ? navItems                                                     // acesso irrestrito
+            : navItems.filter(item => item.roles.includes(canonicalPerfil));
 
     return (
         <aside className="w-64 min-h-screen bg-[#1e3a8a] flex flex-col">
@@ -67,6 +91,16 @@ export default function Sidebar() {
                     />
                 </div>
             </div>
+
+            {/* Badge exclusivo equipe SUAS Fácil */}
+            {!loadingProfile && isSuperUser && (
+                <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-amber-500/20 border border-amber-400/30 flex items-center gap-2">
+                    <Shield size={14} className="text-amber-400 shrink-0" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">
+                        Equipe SUAS Fácil
+                    </span>
+                </div>
+            )}
 
             {/* Navigation */}
             <nav className="flex-1 px-3 py-4 space-y-1">
@@ -86,13 +120,14 @@ export default function Sidebar() {
                 })}
             </nav>
 
-            {/* Logout */}
+            {/* Perfil + Logout */}
             <div className="px-3 py-4 border-t border-blue-800 space-y-2">
-                {/* Label do perfil atual */}
                 {!loadingProfile && canonicalPerfil && (
-                    <div className="px-3 py-2 rounded-lg bg-blue-900/50">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-0.5">Perfil</p>
-                        <p className="text-xs font-semibold text-blue-100 truncate">
+                    <div className={`px-3 py-2 rounded-lg ${isSuperUser ? "bg-amber-500/10 border border-amber-400/20" : "bg-blue-900/50"}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isSuperUser ? "text-amber-400" : "text-blue-400"}`}>
+                            Perfil
+                        </p>
+                        <p className={`text-xs font-semibold truncate ${isSuperUser ? "text-amber-200" : "text-blue-100"}`}>
                             {PROFILE_LABELS[canonicalPerfil] ?? canonicalPerfil}
                         </p>
                     </div>
