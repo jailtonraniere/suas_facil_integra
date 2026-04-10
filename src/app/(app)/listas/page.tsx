@@ -83,11 +83,11 @@ export default function ListasInteligentesPage() {
     const riscLevels: RiscLevel[] = ["CRÍTICA", "ALTA", "MODERADA", "BAIXA"];
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-5 md:space-y-8">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">Listas Inteligentes</h1>
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-blue-900 tracking-tight">Listas Inteligentes</h1>
                     <p className="text-gray-500 mt-1 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                         Famílias ordenadas por Score de Risco
@@ -106,11 +106,11 @@ export default function ListasInteligentesPage() {
 
             {/* Filters bar */}
             <div className="space-y-4">
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
                     {["", ...riscLevels].map(level => (
                         <button key={level || "todas"}
                             onClick={() => { setFiltroClassif(level as RiscLevel | ""); setPage(0); }}
-                            className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-300 border ${filtroClassif === level
+                            className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all duration-300 border whitespace-nowrap shrink-0 ${filtroClassif === level
                                 ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/25 scale-105"
                                 : "bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:text-blue-600 shadow-sm"
                                 }`}>
@@ -119,22 +119,24 @@ export default function ListasInteligentesPage() {
                     ))}
                 </div>
 
-                <div className="card p-2 flex flex-wrap gap-2 items-center bg-gray-50/50">
-                    <div className="flex-1 min-w-[300px] relative">
+                <div className="card p-2 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-gray-50/50">
+                    <div className="relative flex-1 min-w-0">
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input className="input !bg-white pl-12 h-12" placeholder="Pesquisar por nome do responsável..."
                             value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} />
                     </div>
-                    <select className="input !bg-white w-64 h-12" value={filtroTerritorio}
-                        onChange={e => { setFiltroTerritorio(e.target.value); setPage(0); }}>
-                        <option value="">Todos os territórios</option>
-                        {territorios.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
-                    </select>
-                    <button onClick={() => setSortDir(d => d === "desc" ? "asc" : "desc")}
-                        className="btn-secondary h-12 px-6">
-                        <Filter size={16} />
-                        Score {sortDir === "desc" ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-                    </button>
+                    <div className="flex gap-2">
+                        <select className="input !bg-white flex-1 sm:w-48 h-12" value={filtroTerritorio}
+                            onChange={e => { setFiltroTerritorio(e.target.value); setPage(0); }}>
+                            <option value="">Todos os territórios</option>
+                            {territorios.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                        </select>
+                        <button onClick={() => setSortDir(d => d === "desc" ? "asc" : "desc")}
+                            className="btn-secondary h-12 px-4 md:px-6 shrink-0">
+                            <Filter size={16} />
+                            Score {sortDir === "desc" ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                        </button>
+                    </div>
                 </div>
             </div>
 

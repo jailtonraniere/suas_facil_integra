@@ -167,17 +167,17 @@ export default function ConfiguracoesPage() {
     };
 
     return (
-        <div className="p-8 max-w-5xl mx-auto space-y-8">
-            <div className="flex items-center justify-between">
+        <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6 md:space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">Configurações</h1>
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-blue-900 tracking-tight">Configurações</h1>
                     <p className="text-sm text-gray-500 mt-1">Gerenciamento de sistema, usuários e territórios</p>
                 </div>
             </div>
 
             {/* Município */}
             {municipio && (
-                <div className="card p-6 border-blue-100 bg-blue-50/30 flex items-center gap-5">
+                <div className="card p-4 md:p-6 border-blue-100 bg-blue-50/30 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
                     <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-blue-600">
                         <Building size={28} />
                     </div>
@@ -190,18 +190,19 @@ export default function ConfiguracoesPage() {
 
             {/* Usuários */}
             <div className="card overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                <div className="px-4 md:px-6 py-4 md:py-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gray-50/50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                             <Users size={20} />
                         </div>
                         <h2 className="font-bold text-gray-900">Usuários e Perfis</h2>
                     </div>
-                    <button onClick={() => handleOpenUserModal()} className="btn-primary py-2 px-4 text-xs flex items-center gap-2">
+                    <button onClick={() => handleOpenUserModal()} className="btn-primary py-2 px-4 text-xs flex items-center gap-2 w-full sm:w-auto justify-center">
                         <Plus size={14} /> Adicionar Usuário
                     </button>
                 </div>
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[600px]">
                     <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                         <tr>{["Nome", "E-mail", "Perfil", "Status", "Ações"].map(h => (
                             <th key={h} className="px-4 py-3 text-left font-medium">{h}</th>
@@ -254,22 +255,24 @@ export default function ConfiguracoesPage() {
                         })}
                     </tbody>
                 </table>
+                </div>
             </div>
 
             {/* Territórios */}
             <div className="card overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                <div className="px-4 md:px-6 py-4 md:py-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gray-50/50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                             <MapPin size={20} />
                         </div>
                         <h2 className="font-bold text-gray-900">Territórios Cadastrados</h2>
                     </div>
-                    <button onClick={() => handleOpenTerritoryModal()} className="btn-primary py-2 px-4 text-xs flex items-center gap-2">
+                    <button onClick={() => handleOpenTerritoryModal()} className="btn-primary py-2 px-4 text-xs flex items-center gap-2 w-full sm:w-auto justify-center">
                         <Plus size={14} /> Novo Território
                     </button>
                 </div>
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[500px]">
                     <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                         <tr>{["Nome", "Tipo", "Status", "Ações"].map(h => (
                             <th key={h} className="px-4 py-3 text-left font-medium">{h}</th>
@@ -307,6 +310,7 @@ export default function ConfiguracoesPage() {
                         ))}
                     </tbody>
                 </table>
+                </div>
             </div>
 
             {/* User Modal */}

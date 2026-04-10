@@ -12,6 +12,8 @@
 
 body {
   @apply font-sans bg-gray-50 text-gray-900;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .badge-critica  { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800; }
@@ -43,4 +45,35 @@ body {
 
 .hover-lift {
   @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl;
+}
+
+/* ─── Mobile-first Responsive Utilities ─────────────────────────────────── */
+
+/* Tables: make action buttons always visible on touch devices */
+@media (max-width: 1023px) {
+  .group .opacity-0 {
+    opacity: 1 !important;
+  }
+}
+
+/* Custom scrollbar (thin on mobile) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+/* Safe area padding for mobile devices with notch */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

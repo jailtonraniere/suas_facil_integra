@@ -51,9 +51,9 @@ export default function RelatoriosPage() {
     }
 
     return (
-        <div className="p-8 max-w-4xl mx-auto space-y-10">
+        <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 md:space-y-10">
             <div>
-                <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">Importação & Relatórios</h1>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-blue-900 tracking-tight">Importação & Relatórios</h1>
                 <p className="text-gray-500 mt-1 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                     Central de processamento e inteligência de dados (CadÚnico & e-SUS)
@@ -62,7 +62,7 @@ export default function RelatoriosPage() {
 
             {/* Import Form */}
             {canImport && (
-                <div className="card p-8 relative overflow-hidden">
+                <div className="card p-5 md:p-8 relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
 
                     <div className="flex items-center gap-3 mb-8">
@@ -76,7 +76,7 @@ export default function RelatoriosPage() {
                     </div>
 
                     <form onSubmit={handleImport} className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-8">
                             <div className="space-y-2">
                                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Tipo de Fonte de Dados</label>
                                 <select className="input h-14 text-base font-medium" value={tipo} onChange={e => setTipo(e.target.value as "CadUnico" | "eSUS")}>

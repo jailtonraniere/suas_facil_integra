@@ -32,7 +32,7 @@ export default function LoginPage() {
                     <img
                         src="/logo_full.png"
                         alt="SUAS Fácil Integra"
-                        className="h-32 object-contain"
+                        className="h-20 sm:h-32 object-contain"
                     />
                     <div className="w-full h-px bg-gray-100 mt-2"></div>
                 </div>
@@ -76,7 +76,7 @@ export default function LoginPage() {
                             </div>
                         )}
 
-                        <div className="flex items-center justify-between pt-2">
+                        <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-2">
                             <button type="button" className="text-blue-900 font-semibold text-[15px] hover:underline">
                                 Esqueceu sua senha?
                             </button>

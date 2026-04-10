@@ -101,14 +101,14 @@ export default function DashboardPage() {
     const isStrategic = ["SECRETARIO_MUNICIPAL", "GESTOR_OPERACIONAL"].includes(canonicalPerfil);
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-10">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-10">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-blue-900 tracking-tight">
                         {isStrategic ? "Dashboard Executivo" : "Dashboard Operacional"}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs md:text-sm">
                         <p className="text-gray-600 font-bold text-sm bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
                             Olá, <span className="text-blue-900">{user?.profile?.nome || "Usuário"}</span>
                         </p>
@@ -135,7 +135,7 @@ export default function DashboardPage() {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
                 <KpiCard label="Total de Famílias" value={totalFamilias.toLocaleString("pt-BR")}
                     icon={<Users size={22} />} color="blue" />
                 <KpiCard label="Prioridade Crítica" value={totalCriticas.toLocaleString("pt-BR")}
@@ -150,11 +150,11 @@ export default function DashboardPage() {
             </div>
 
             {/* Charts */}
-            <div className="grid lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
                 {/* Pie */}
-                <div className="card p-5 lg:col-span-2">
-                    <h2 className="font-semibold text-gray-800 mb-4">Distribuição por Risco</h2>
-                    <ResponsiveContainer width="100%" height={220}>
+                <div className="card p-4 md:p-5 lg:col-span-2">
+                    <h2 className="font-semibold text-gray-800 mb-3 md:mb-4 text-sm md:text-base">Distribuição por Risco</h2>
+                    <ResponsiveContainer width="100%" height={180}>
                         <PieChart>
                             <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85}
                                 dataKey="value" nameKey="name" paddingAngle={2}>
@@ -170,9 +170,9 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Bar */}
-                <div className="card p-5 lg:col-span-3">
-                    <h2 className="font-semibold text-gray-800 mb-4">Risco por Território</h2>
-                    <ResponsiveContainer width="100%" height={220}>
+                <div className="card p-4 md:p-5 lg:col-span-3">
+                    <h2 className="font-semibold text-gray-800 mb-3 md:mb-4 text-sm md:text-base">Risco por Território</h2>
+                    <ResponsiveContainer width="100%" height={180}>
                         <BarChart data={barData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
@@ -189,8 +189,8 @@ export default function DashboardPage() {
 
             {/* Top 10 Famílias */}
             <div className="card">
-                <div className="px-5 py-4 border-b border-gray-100">
-                    <h2 className="font-semibold text-gray-800">Top 10 Famílias — Maior Score</h2>
+                <div className="px-4 md:px-5 py-3 md:py-4 border-b border-gray-100">
+                    <h2 className="font-semibold text-gray-800 text-sm md:text-base">Top 10 Famílias — Maior Score</h2>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -273,7 +273,7 @@ function KpiCard({ label, value, icon, color, sub }: {
     const c = colorMap[color] || colorMap.blue;
 
     return (
-        <div className={`relative overflow-hidden group hover-lift rounded-2xl p-6 shadow-lg ${c.bg} ${c.text}`}>
+        <div className={`relative overflow-hidden group hover-lift rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg ${c.bg} ${c.text}`}>
             {/* Background Pattern */}
             <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
                 {icon}
@@ -281,14 +281,14 @@ function KpiCard({ label, value, icon, color, sub }: {
 
             <div className="relative z-10 flex flex-col h-full justify-between">
                 <div className="flex items-start justify-between">
-                    <p className="text-xs font-bold uppercase tracking-widest opacity-80">{label}</p>
+                    <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-80 leading-tight">{label}</p>
                     <div className={`p-2.5 rounded-xl ${c.iconBg} backdrop-blur-sm shadow-inner`}>
                         {icon}
                     </div>
                 </div>
 
                 <div className="mt-4">
-                    <p className="text-3xl font-black tracking-tight">{value}</p>
+                    <p className="text-xl md:text-3xl font-black tracking-tight">{value}</p>
                     {sub && <p className="text-[10px] mt-1 font-medium opacity-90 uppercase tracking-wide">{sub}</p>}
                 </div>
             </div>

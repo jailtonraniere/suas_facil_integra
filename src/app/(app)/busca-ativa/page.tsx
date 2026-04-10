@@ -81,23 +81,23 @@ export default function BuscaAtivaPage() {
     }
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-10">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">Busca Ativa</h1>
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-blue-900 tracking-tight">Busca Ativa</h1>
                     <p className="text-gray-500 mt-1 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                         Planejamento e execução de visitas priorizadas por Score
                     </p>
                 </div>
-                <button onClick={() => setShowForm(s => !s)} className="btn-primary shadow-lg shadow-blue-500/20">
+                <button onClick={() => setShowForm(s => !s)} className="btn-primary shadow-lg shadow-blue-500/20 w-full sm:w-auto justify-center">
                     <Plus size={18} /> Nova Busca Ativa
                 </button>
             </div>
 
             {/* Form */}
             {showForm && (
-                <div className="card p-8 border-blue-100 bg-gradient-to-b from-white to-blue-50/30">
+                <div className="card p-5 md:p-8 border-blue-100 bg-gradient-to-b from-white to-blue-50/30">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white">
                             <Plus size={20} />
@@ -105,7 +105,7 @@ export default function BuscaAtivaPage() {
                         <h2 className="text-xl font-bold text-gray-900">Criar Nova Busca Ativa</h2>
                     </div>
                     <form onSubmit={criarBusca} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
                             <div className="space-y-1.5">
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Território</label>
                                 <select className="input" required value={territId} onChange={e => setTerritId(e.target.value)}>

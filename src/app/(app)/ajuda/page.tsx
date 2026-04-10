@@ -5,7 +5,7 @@ import {
     Layout, Layers, Map as MapIcon, Link as LinkIcon,
     BarChart, PlayCircle, Star, Lock, Lightbulb,
     MessageCircle, HelpCircle, PhoneCall, Search, X, TrendingUp,
-    CheckCircle2, AlertCircle, Users, Activity, FileText, Settings
+    CheckCircle2, AlertCircle, Users, Activity, FileText, Settings, Menu
 } from "lucide-react";
 
 const chapters = [
@@ -355,9 +355,22 @@ export default function AjudaPage() {
     }, [searchTerm]);
 
     return (
-        <div className="flex h-[calc(100vh-2rem)] overflow-hidden bg-white rounded-[2.5rem] shadow-2xl m-4 border border-gray-100 ring-1 ring-black/5">
-            {/* Left Sidebar - Chapters */}
-            <div className="w-80 bg-[#f8fafc] border-r border-gray-200/50 flex flex-col">
+        <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] lg:h-[calc(100vh-2rem)] overflow-hidden bg-white lg:rounded-[2.5rem] shadow-2xl lg:m-4 border border-gray-100 ring-1 ring-black/5">
+            {/* Mobile Chapter Selector */}
+            <div className="lg:hidden p-3 border-b border-gray-200 bg-[#f8fafc]">
+                <select
+                    value={activeTab}
+                    onChange={(e) => setActiveTab(e.target.value)}
+                    className="w-full h-12 px-4 bg-white border border-gray-200 rounded-xl text-sm font-bold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                    {chapters.map(ch => (
+                        <option key={ch.id} value={ch.id}>{ch.title}</option>
+                    ))}
+                </select>
+            </div>
+
+            {/* Left Sidebar - Chapters (desktop only) */}
+            <div className="hidden lg:flex w-80 bg-[#f8fafc] border-r border-gray-200/50 flex-col">
                 <div className="p-8 border-b border-gray-200/50 space-y-6">
                     <div>
                         <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Cento de Ajuda</h1>
@@ -414,7 +427,7 @@ export default function AjudaPage() {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto p-16 custom-scrollbar bg-white">
+            <div className="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16 custom-scrollbar bg-white">
                 <div className="max-w-3xl mx-auto">
                     {renderContent(activeTab)}
                 </div>
